@@ -155,3 +155,28 @@ When a source field is unavailable, the corresponding nullable canonical field s
 If a required source column is missing or cannot be interpreted reliably, the problem should be recorded as a data-quality issue rather than silently ignored.
 
 Source-specific transformations must occur before canonical validation, but general analysis rules must operate only on canonical fields.
+
+## Table Relationships and Integrity Rules
+
+### Relationships
+
+- One record in `source_files` may be associated with many records in `transactions`.
+- One transaction may be associated with zero, one or many findings.
+- One finding may use one or many transactions as supporting evidence.
+- The relationship between findings and transactions is therefore represented by a separate linking table.
+- Supplier aliases provide an interpretation of supplier names without replacing the original values stored in transactions.
+
+```text
+source_files
+    1
+    |
+    | source_file_id
+    |
+    many
+transactions
+    many
+    |
+    | finding_transactions
+    |
+    many
+findings
