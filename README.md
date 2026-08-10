@@ -100,3 +100,32 @@ Public-spending data has important limitations:
 SpendFlow can therefore identify patterns and suspicious records, but public data alone will rarely confirm the underlying business cause.
 
 Stronger testing of duplicate payments, recurring-payment price increases, supplier identity matching and realised savings will use clearly labelled synthetic data with known expected outcomes.
+
+## Architecture at a Glance
+
+SpendFlow follows this high-level process:
+
+```text
+UK public-spending CSV
+        ↓
+preserved raw file
+        ↓
+source-specific mapping
+        ↓
+canonical transactions
+        ↓
+validation
+        ↓
+DuckDB
+        ↓
+deterministic Python and SQL findings
+        ↓
+stored findings and evidence
+        ↓
+approved read-only Python tools
+        ↓
+AI-assisted investigation
+        ↓
+Streamlit interface
+        ↓
+human procurement or finance decision
