@@ -1,7 +1,0 @@
-README.md
-pyproject.toml
-src/spendflow/__init__.py
-src/spendflow.egg-info/PKG-INFO
-src/spendflow.egg-info/SOURCES.txt
-src/spendflow.egg-info/dependency_links.txt
-src/spendflow.egg-info/top_level.txt
