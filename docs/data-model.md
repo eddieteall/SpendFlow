@@ -179,4 +179,4 @@ transactions
     | finding_transactions
     |
     many
-findings
+findingsGet-AuthenticodeSignature .venv\Lib\site-packages\numpy\_core\_multiarray_umath.cp311-win_amd64.pyd | Format-List Status,StatusMessage
