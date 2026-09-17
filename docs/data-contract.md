@@ -2,8 +2,17 @@
 
 ## Source
 
-Dataset: Department for Infrastructure departmental spend over £25,000
+Dataset: Department for Infrastructure (DfI) Departmental spend over £25,000 - 2026/27
+
+Publisher: OpenDataNI
+
+Source page: https://www.data.gov.uk/dataset/5ed9b600-46d6-48ba-a023-2559d41523e3/department-for-infrastructure-dfi-departmental-spend-over-f25-000-2026-27
+
 Sample file: `dfi-departmental-spend-over-25000-for-july-2026-csv-format.csv`
+
+File URL: https://www.data.gov.uk/dataset/5ed9b600-46d6-48ba-a023-2559d41523e3/department-for-infrastructure-dfi-departmental-spend-over-f25-000-2026-27/datafile/a97add0c-6c9c-4e8e-b523-488ad5fc8a1f/preview
+
+Reporting period: July 2026
 
 This file is used as SpendFlow's first real public-spending input.
 
