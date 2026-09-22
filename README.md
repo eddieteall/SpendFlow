@@ -129,3 +129,39 @@ AI-assisted investigation
 Streamlit interface
         ↓
 human procurement or finance decision
+
+## Raw File Ingestion
+
+SpendFlow registers source CSV files before any transaction cleaning or mapping occurs.
+
+The ingestion step:
+
+- preserves the raw CSV unchanged;
+- calculates a SHA-256 hash of the complete file;
+- records source-file metadata;
+- assigns a unique `source_file_id`;
+- records the source mapping name;
+- prevents the same unchanged file from being registered more than once.
+
+Example:
+
+```python
+from pathlib import Path
+
+from spendflow.ingestion import register_source_file
+
+
+record = register_source_file(
+    Path(
+        "data/raw/"
+        "dfi-departmental-spend-over-25000-for-july-2026-csv-format.csv"
+    ),
+    source_name="OpenDataNI",
+    mapping_name="dfi_spend_v1",
+    source_url=(
+        "https://www.data.gov.uk/dataset/"
+        "5ed9b600-46d6-48ba-a023-2559d41523e3/"
+        "department-for-infrastructure-dfi-departmental-"
+        "spend-over-f25-000-2026-27"
+    ),
+)
