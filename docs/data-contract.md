@@ -132,3 +132,11 @@ Every canonical transaction created from this source must eventually retain:
 * enough information to trace a finding back to the published record.
 
 No transformation may modify the original file stored in `data/raw/`.
+
+The loader preserves empty text fields as empty strings and missing fields from
+short records as null. It accepts ordinary signed decimal amounts with optional
+pound sign and correctly grouped thousands separators. Exponents, non-finite
+values, values with over two fractional digits and amounts outside DECIMAL(18,2)
+are rejected and retained as validation evidence. Source row 2 is the first CSV
+record after the header; blank lines and embedded newlines do not increase the
+record count.

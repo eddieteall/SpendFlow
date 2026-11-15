@@ -177,3 +177,23 @@ finding
     → canonical transaction
     → source file
     → original source row
+## Implemented rules (v1)
+
+The rules run on one source snapshot. Except for validation and supplier name review,
+spend rules use valid GBP, EUR or USD amounts from named suppliers. For repeated
+source values, they use only the earliest record to avoid counting the same published
+values twice. All records stay available for review.
+
+| Finding | Trigger | Evidence |
+| --- | --- | --- |
+| Missing or unreliable data | Missing supplier/date/amount, invalid date or amount, wrong record width, repeated published values, malformed header/CSV or missing/unsupported currency in the synthetic input. | Raw validation values, source references and linked records. A source mapping error can have no transaction. |
+| Potential duplicate | Equal normalised buyer, supplier identity, supported currency, positive amount, date and nonblank invoice reference. The near-date rule uses the same fields with a gap of 1–2 days, and requires exactly two eligible records with that signature across the input. | Matching fields, date gap, available payment references, and whether payment references are missing. A repeated publication row is a separate quality finding. |
+| Supplier identity | Distinct names have the same key after case folding, punctuation-to-space, collapsing whitespace, and replacing a trailing “limited” with “ltd”. No fuzzy name matching. | Exact raw names, match method and statuses. Proposed and rejected names stay separate in rollups. An accepted alias points directly to a non-rejected root name in its group. |
+| Unusual transaction | Positive payment is strictly over 3× the median among at least five other positive, dated payments sharing buyer, category and currency. Credits are excluded, and no inference is made with too few peers. | Candidate, all comparators, cohort, peer count, median and threshold. |
+| Recurring payment increase | Four positive payments with the same buyer, supplier identity, currency, department and nonblank exact service description. Consecutive dates are 27–33 days apart and invoice references are distinct; the first three payments stay within 5% of their median. The fourth must be at least 20% above that median. Without a qualifying series the evidence is insufficient to flag a recurring increase. | Three baseline records, candidate record, baseline and latest amounts, exact increase and percentage rounded to two decimals. No unit-price inference. |
+| Fragmented spend | At least two named departments have positive net spend with the same supplier identity in one currency. Credits reduce net spend. | Net by department and all contributing department records. Savings value is unknown. |
+
+Supplier identity for spend means the same exact published name or an explicit
+accepted alias. Reviews are supplied as a local JSON file when loading; the
+[synthetic decisions](../data/synthetic-alias-reviews.json) show the format.
+A review is not a change to the source data.

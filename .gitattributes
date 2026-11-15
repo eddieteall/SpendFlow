@@ -1,0 +1,2 @@
+data/raw/*.csv -text
+data/synthetic-spend.csv text eol=lf

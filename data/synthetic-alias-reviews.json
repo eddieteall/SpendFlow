@@ -1,0 +1,11 @@
+{
+  "Demo Services Limited": {
+    "status": "accepted",
+    "canonical": "Demo Services Ltd",
+    "notes": "Synthetic fixture: known to be the same supplier."
+  },
+  "Demo Services Ltd.": {
+    "status": "rejected",
+    "notes": "Synthetic fixture: no verified identity match for this published name."
+  }
+}
