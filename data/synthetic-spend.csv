@@ -1,0 +1,24 @@
+Department,Organisation,Check Date,Expense type,Supplier,Invoice number,Invoice Amount,Postcode,Currency,Description,Payment reference
+D1,Demo Buyer,01/01/2026,Facilities,Demo Services Ltd,0001,100.00,,GBP,Monthly equipment service,P01
+D1,Demo Buyer,01/02/2026,Facilities,Demo Services Ltd,0002,100.00,,GBP,Monthly equipment service,P02
+D1,Demo Buyer,01/03/2026,Facilities,Demo Services Ltd,0003,100.00,,GBP,Monthly equipment service,P03
+D1,Demo Buyer,01/04/2026,Facilities,Demo Services Ltd,0004,130.00,,GBP,Monthly equipment service,P04
+D2,Demo Buyer,07/04/2026,Facilities,Demo Services Limited,AB01,100.00,,GBP,One-off work,P05
+D2,Demo Buyer,08/04/2026,Facilities,Demo Services Ltd.,AB02,100.00,,GBP,One-off work,P06
+D2,Demo Buyer,09/04/2026,Facilities,Demo Services North Ltd,AB03,100.00,,GBP,One-off work,P07
+D2,Demo Buyer,10/04/2026,Facilities,Demo Repairs Ltd,AB04,1200.00,,GBP,Major one-off repair,P08
+D1,Demo Buyer,12/04/2026,Parts,Demo Parts Ltd,0009,75.00,,GBP,Replacement part,P09
+D1,Demo Buyer,12/04/2026,Parts,Demo Parts Ltd,0009,75.00,,GBP,Replacement part,P10
+D1,Demo Buyer,13/04/2026,Parts,Demo Parts Ltd,0010,80.00,,GBP,Replacement part,P11
+D1,Demo Buyer,14/04/2026,Parts,Demo Parts Ltd,0010,80.00,,GBP,Replacement part,P12
+D1,Demo Buyer,12/05/2026,Parts,Demo Parts Ltd,0009,75.00,,GBP,Monthly reorder,P13
+D1,Demo Buyer,12/05/2026,Parts,Demo Parts Ltd,0009,75.00,,GBP,Monthly reorder,P13
+D1,Demo Buyer,31/02/2026,Parts,,BAD01,NaN,,ZZZ,,
+D1,Demo Buyer,20/04/2026,Facilities,Demo Repairs Ltd,C01,-500.00,,GBP,Credit,P14
+D1,Demo Buyer,01/01/2026,Software,Demo Software Ltd,S01,200.00,,GBP,Monthly software service,S01
+D1,Demo Buyer,01/02/2026,Software,Demo Software Ltd,S02,200.00,,GBP,Monthly software service,S02
+D1,Demo Buyer,01/03/2026,Software,Demo Software Ltd,S03,200.00,,GBP,Monthly software service,S03
+D1,Demo Buyer,01/04/2026,Software,Demo Software Ltd,S04,200.00,,GBP,Monthly software service,S04
+D1,Demo Buyer,01/01/2026,Other,Demo Short History Ltd,H01,100.00,,GBP,Monthly support,H01
+D1,Demo Buyer,01/02/2026,Other,Demo Short History Ltd,H02,300.00,,GBP,Monthly support,H02
+D1,Demo Buyer,13/04/2026,Facilities,Demo Repairs Ltd,E01,10000.00,,EUR,Foreign currency,P15

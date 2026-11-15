@@ -7,7 +7,6 @@ from datetime import datetime, timezone
 from hashlib import sha256
 from pathlib import Path
 from shutil import copyfile
-from uuid import uuid4
 
 
 DEFAULT_RAW_DIRECTORY = Path("data/raw")
@@ -34,6 +33,7 @@ def calculate_file_hash(file_path: Path) -> str:
 def preserve_raw_file(
     input_path: Path,
     raw_directory: Path = DEFAULT_RAW_DIRECTORY,
+    *, storage_name: str | None = None,
 ) -> Path:
     """Copy a CSV into the raw-data directory without altering its contents."""
 
@@ -48,7 +48,9 @@ def preserve_raw_file(
 
     raw_directory.mkdir(parents=True, exist_ok=True)
 
-    destination = raw_directory / input_path.name
+    if storage_name is not None and Path(storage_name).name != storage_name:
+        raise ValueError("storage_name must be a file name")
+    destination = raw_directory / (storage_name or input_path.name)
 
     if destination.exists():
         input_hash = calculate_file_hash(input_path)
@@ -66,7 +68,7 @@ def preserve_raw_file(
     return destination
 
 
-def count_csv_rows(file_path: Path, encoding: str = "cp1252") -> int:
+def count_csv_rows(file_path: Path, encoding: str = "cp1252") -> int | None:
     """Count data rows in a CSV, excluding its header."""
 
     with Path(file_path).open(
@@ -103,8 +105,10 @@ def save_source_registry(
     registry_path = Path(registry_path)
     registry_path.parent.mkdir(parents=True, exist_ok=True)
 
-    with registry_path.open("w", encoding="utf-8") as file:
+    temporary = registry_path.with_suffix(".tmp")
+    with temporary.open("w", encoding="utf-8") as file:
         json.dump(records, file, indent=2)
+    temporary.replace(registry_path)
 
 
 def register_source_file(
@@ -116,6 +120,7 @@ def register_source_file(
     encoding: str = "cp1252",
     raw_directory: Path = DEFAULT_RAW_DIRECTORY,
     registry_path: Path = DEFAULT_REGISTRY_PATH,
+    *, storage_name: str | None = None,
 ) -> dict:
     """Preserve and register a raw CSV source file."""
 
@@ -140,16 +145,17 @@ def register_source_file(
     records = load_source_registry(registry_path)
 
     for record in records:
-        if record["file_hash"] == file_hash:
+        if record["file_hash"] == file_hash and record["mapping_name"] == mapping_name:
             return record
 
     preserved_path = preserve_raw_file(
         input_path,
         raw_directory,
+        storage_name=storage_name,
     )
 
     record = {
-        "source_file_id": str(uuid4()),
+        "source_file_id": sha256(f"{mapping_name}:{file_hash}".encode()).hexdigest(),
         "source_name": source_name,
         "source_url": source_url,
         "file_name": input_path.name,

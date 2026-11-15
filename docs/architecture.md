@@ -150,3 +150,8 @@ SpendFlow/
 ├── .gitignore
 ├── pyproject.toml
 └── requirements.txt
+In the local demo, CSV parsing preserves record positions and pandas standardises
+names before DuckDB storage. The loader runs deterministic validation and findings
+inside the same database transaction. Streamlit reads a selected demo snapshot,
+and the optional provider sees only the results of the approved investigation tools.
+See the README for the current commands and verification workflow.

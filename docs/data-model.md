@@ -180,3 +180,13 @@ transactions
     |
     many
 findings
+## Local snapshot implementation
+
+DuckDB uses time-zone-aware timestamps for load and finding times. Currency is nullable
+for inputs that carry a currency column with a missing value. The DfI mapping supplies GBP.
+
+Findings have a source-file reference and structured JSON evidence. The
+finding_transactions table links each finding to its records and evidence roles.
+The validation_evidence table records the finding, source ID, optional transaction ID
+and source record number, field, error type and raw value. One database represents one
+source and alias review configuration.

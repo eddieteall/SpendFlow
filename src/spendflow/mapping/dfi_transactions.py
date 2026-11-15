@@ -1,19 +1,22 @@
 """Mapping utilities for the Department for Infrastructure spending dataset."""
 
-import json
 import csv
-from pathlib import Path
-
-
-
+import json
+import re
 from datetime import date, datetime, timezone
 from decimal import Decimal, InvalidOperation
 from hashlib import sha256
+from pathlib import Path
+
+import pandas as pd
 
 
 DFI_ENCODING = "cp1252"
 DFI_CURRENCY = "GBP"
 DFI_DATE_FORMAT = "%d/%m/%Y"
+SYNTHETIC_COLUMNS = ["Currency", "Description", "Payment reference"]
+SUPPORTED_CURRENCIES = ("GBP", "EUR", "USD")
+AMOUNT_PATTERN = re.compile(r"(?:[+-]?£|£[+-]?|[+-]?)(?:[0-9]+|[0-9]{1,3}(?:,[0-9]{3})+)(?:\.[0-9]{1,2})?")
 
 DFI_SOURCE_COLUMNS = [
     "Department",
@@ -30,6 +33,7 @@ def map_dfi_file(
     file_path: Path,
     source_file_id: str,
     encoding: str = DFI_ENCODING,
+    *, synthetic: bool = False,
 ) -> tuple[list[dict], list[dict]]:
     """Map a DfI CSV file into canonical SpendFlow transactions."""
 
@@ -48,14 +52,14 @@ def map_dfi_file(
         encoding=encoding,
         newline="",
     ) as file:
-        reader = csv.DictReader(file)
+        reader = csv.DictReader(file, strict=True)
 
         if reader.fieldnames is None:
             raise ValueError("Source CSV does not contain a header row")
 
         missing_columns = [
             column
-            for column in DFI_SOURCE_COLUMNS
+            for column in DFI_SOURCE_COLUMNS + (SYNTHETIC_COLUMNS if synthetic else [])
             if column not in reader.fieldnames
         ]
 
@@ -65,18 +69,38 @@ def map_dfi_file(
                 + ", ".join(missing_columns)
             )
 
-        for source_row_number, row in enumerate(
-            reader,
-            start=2,
-        ):
-            transaction, row_errors = map_dfi_row(
-                row=row,
-                source_file_id=source_file_id,
-                source_row_number=source_row_number,
-            )
+        if len(set(reader.fieldnames)) != len(reader.fieldnames):
+            raise ValueError("Source CSV contains duplicate column names")
 
-            transactions.append(transaction)
-            validation_errors.extend(row_errors)
+        # DictReader retains the distinction between an empty field and a short
+        # record, including existing record numbering and raw-row hashes.
+        records, extra_fields = [], {}
+        for number, row in enumerate(reader, start=2):
+            if None in row:
+                extra_fields[number] = row.pop(None)
+            records.append(row)
+
+    frame = pd.DataFrame(records, columns=reader.fieldnames, dtype=object)
+    # Vectorised standardisation retains raw cells for validation and hashing.
+    for column in ("Supplier", "Organisation"):
+        frame[f"_normalised_{column}"] = (
+            frame[column].str.split().str.join(" ").str.casefold().replace("", None)
+            if len(frame) and frame[column].notna().any() else None
+        )
+    for number, row in enumerate(frame.to_dict("records"), start=2):
+        if number in extra_fields:
+            row[None] = extra_fields[number]
+        transaction, errors = map_dfi_row(row, source_file_id, number)
+        for source, target in (("Supplier", "supplier"), ("Organisation", "buyer")):
+            value = row[f"_normalised_{source}"]
+            transaction[f"{target}_name_normalised"] = value if isinstance(value, str) else None
+        if synthetic:
+            apply_synthetic_fields(row, transaction, errors)
+        if number in extra_fields or any(row.get(key) is None for key in reader.fieldnames):
+            overflow = json.dumps(extra_fields[number]) if number in extra_fields else None
+            errors.append(create_validation_error(number, "record", "wrong_column_count", overflow))
+        transactions.append(transaction)
+        validation_errors.extend(errors)
 
     return transactions, validation_errors
 
@@ -115,25 +139,27 @@ def parse_amount(value: str | None) -> Decimal | None:
     if value is None or not value.strip():
         return None
 
-    cleaned_value = (
-        value.strip()
-        .replace("£", "")
-        .replace(",", "")
-    )
-
+    value = value.strip()
+    if not AMOUNT_PATTERN.fullmatch(value):
+        return None
     try:
-        return Decimal(cleaned_value)
+        amount = Decimal(value.replace("£", "").replace(",", ""))
+        return amount if abs(amount) < Decimal("10000000000000000") else None
     except InvalidOperation:
         return None
 
 
-def calculate_raw_record_hash(row: dict[str, str | None]) -> str:
+def calculate_raw_record_hash(row: dict) -> str:
     """Return a reproducible SHA-256 hash of the source values."""
 
     source_values = {
         column: row.get(column)
-        for column in DFI_SOURCE_COLUMNS
+        for column in DFI_SOURCE_COLUMNS + [key for key in SYNTHETIC_COLUMNS if key in row]
     }
+
+    for column, value in row.items():
+        if column not in source_values and column not in ("_normalised_Supplier", "_normalised_Organisation"):
+            source_values[column] = value
 
     serialised_row = json.dumps(
         source_values,
@@ -178,7 +204,7 @@ def create_validation_error(
 
 
 def map_dfi_row(
-    row: dict[str, str | None],
+    row: dict,
     source_file_id: str,
     source_row_number: int,
 ) -> tuple[dict, list[dict]]:
@@ -235,6 +261,11 @@ def map_dfi_row(
     supplier_name_raw = row.get("Supplier")
     buyer_name_raw = row.get("Organisation")
 
+    if normalise_name(supplier_name_raw) is None:
+        validation_errors.append(create_validation_error(
+            source_row_number, "supplier_name_raw", "missing_value", supplier_name_raw,
+        ))
+
     transaction = {
         "transaction_id": generate_transaction_id(
             source_file_id,
@@ -265,3 +296,18 @@ def map_dfi_row(
     }
 
     return transaction, validation_errors
+
+def apply_synthetic_fields(row: dict, transaction: dict, errors: list[dict]) -> None:
+    """Label the richer synthetic source explicitly; DfI supplies none of these fields."""
+    raw_currency = row.get("Currency")
+    currency = (raw_currency or "").strip().upper() or None
+    transaction.update(
+        currency=currency,
+        description=row.get("Description") or None,
+        payment_reference=row.get("Payment reference") or None,
+    )
+    if currency not in SUPPORTED_CURRENCIES:
+        errors.append(create_validation_error(
+            transaction["source_row_number"], "currency",
+            "unsupported_currency" if currency else "missing_value", raw_currency,
+        ))
