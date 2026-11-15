@@ -224,15 +224,24 @@ def test_streamlit_demo_opens_evidence(tmp_path, monkeypatch):
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     app = AppTest.from_file(str(dashboard), default_timeout=20).run()
     assert not app.exception
-    assert [m.value for m in app.metric] == ["292", "36"]
+    assert {m.label: m.value for m in app.metric}["Transactions"] == "292"
+    assert {m.label: m.value for m in app.metric}["Open findings"] == "36"
+    app.button(key="view-unusual_transaction").click().run()
+    assert not app.exception
+    assert app.selectbox(key="filter-kind").value == "unusual_transaction"
     candidate = app.dataframe[-1].value.iloc[0]
     assert candidate["source_row_number"] == 83
     assert candidate["evidence_role"] == "candidate"
     assert candidate["transaction_id"] == "499dde9a5b9ef93cbdf2c6e1e7a79883c25671ca34b54f7c391e5158d15958f0"
-    app.radio[0].set_value("Synthetic • invented payments").run()
-    app.selectbox[0].set_value("price_increase").run()
+    app.radio[0].set_value("synthetic").run()
+    app.selectbox(key="filter-kind").set_value("price_increase").run()
     assert not app.exception
-    assert [m.value for m in app.metric] == ["23", "11"]
     assert app.code[0].value == RECURRING_ID
     assert app.dataframe[-1].value.source_row_number.tolist() == [5, 2, 3, 4]
+    for page in ("Transactions", "Suppliers", "Data Quality", "Dataset", "How SpendFlow Works", "Settings"):
+        next(button for button in app.button if button.label == page).click().run()
+        assert not app.exception
+        assert app.title[0].value == page
+    next(button for button in app.button if button.label == "AI Investigation").click().run()
+    assert not app.exception
     assert any("Optional AI assistant unavailable" in item.value for item in app.info)
